@@ -1,10 +1,3 @@
-try:
-    __import__('pysqlite3')
-    import sys
-    sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
-except ImportError:
-    pass
-
 import streamlit as st
 import chromadb
 from transformers import pipeline
@@ -362,7 +355,12 @@ def holistic_main():
     if 'converted_docs' not in st.session_state:
         st.session_state.converted_docs = []
     if 'collection' not in st.session_state:
-        st.session_state.collection = chromadb.Client().create_collection(name="documents")
+        # Use get_or_create pattern to avoid duplicate collection error
+        client = chromadb.Client()
+        try:
+            st.session_state.collection = client.get_collection(name="documents")
+        except Exception:
+            st.session_state.collection = client.create_collection(name="documents")
     if 'search_history' not in st.session_state:
         st.session_state.search_history = []
     # Tabs
